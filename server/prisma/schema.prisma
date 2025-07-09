@@ -1,0 +1,79 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+model User {
+  id           Int       @id @default(autoincrement())
+  email        String    @unique
+  name         String?
+  passwordHash String?
+  createdAt    DateTime  @default(now())
+
+  documents    Document[]
+  topics       Topic[]
+  progress     Progress[]
+}
+
+model Document {
+  id          Int       @id @default(autoincrement())
+  user        User      @relation(fields: [userId], references: [id])
+  userId      Int
+  title       String
+  type        String    // 'syllabus' | 'paper'
+  fileUrl     String    // Google Drive or direct file URL
+  uploadedAt  DateTime  @default(now())
+
+  topics      Topic[]
+}
+
+model Topic {
+  id          Int       @id @default(autoincrement())
+  user        User      @relation(fields: [userId], references: [id])
+  userId      Int
+  document    Document  @relation(fields: [documentId], references: [id])
+  documentId  Int
+  title       String
+  createdAt   DateTime  @default(now())
+
+  materials   StudyMaterial[]
+  flashcards  Flashcard[]
+  progress    Progress[]
+}
+
+model StudyMaterial {
+  id        Int      @id @default(autoincrement())
+  topic     Topic    @relation(fields: [topicId], references: [id])
+  topicId   Int
+  type      String   // 'explanation' | 'example' | 'qa'
+  content   String
+  createdAt DateTime @default(now())
+}
+
+model Flashcard {
+  id        Int      @id @default(autoincrement())
+  topic     Topic    @relation(fields: [topicId], references: [id])
+  topicId   Int
+  question  String
+  answer    String
+}
+
+model Progress {
+  id        Int      @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  topic     Topic    @relation(fields: [topicId], references: [id])
+  topicId   Int
+  status    String   
+  updatedAt DateTime @default(now())
+}
